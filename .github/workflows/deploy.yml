@@ -1,0 +1,24 @@
+# .github/workflows/deploy.yml
+name: deploy
+on:
+  push:
+    branches: [ main ]
+jobs:
+  webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_WEBHOOK }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_WEBHOOK_PUBPROFILE }}
+          package: src/webhook_app
+  rag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_RAG }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_RAG_PUBPROFILE }}
+          package: src/rag_service

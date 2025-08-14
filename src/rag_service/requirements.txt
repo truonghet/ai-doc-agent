@@ -1,0 +1,6 @@
+# src/rag_service/requirements.txt
+fastapi==0.111.0
+uvicorn==0.30.1
+openai==1.35.10
+azure-search-documents==11.6.0b4
+python-dotenv==1.0.1
