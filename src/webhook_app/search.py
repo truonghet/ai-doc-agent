@@ -1,9 +1,8 @@
-# src/webhook_app/search.py
-# Index creation helper (run once or on startup)
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchIndex, SimpleField, SearchableField, VectorSearch, VectorSearchAlgorithmConfiguration,
-    HnswParameters, HnswAlgorithmConfiguration, SearchFieldDataType, SearchField, VectorSearchProfile
+    SearchIndex, SimpleField, SearchableField, VectorSearch,
+    VectorSearchAlgorithmConfiguration, HnswParameters,
+    HnswAlgorithmConfiguration, SearchFieldDataType, SearchField, VectorSearchProfile
 )
 from azure.core.credentials import AzureKeyCredential
 from .config import Cfg
@@ -20,9 +19,14 @@ def ensure_index():
         SimpleField(name="pr_number", type=SearchFieldDataType.Int32, filterable=True),
         SimpleField(name="commit_sha", type=SearchFieldDataType.String, filterable=True),
         SimpleField(name="kind", type=SearchFieldDataType.String, filterable=True),
-        SearchField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
-                    searchable=True, dimensions=3072,  # text-embedding-3-large
-                    vector_search_dimensions=3072, vector_search_profile_name="vprof")
+        SearchField(
+            name="vector",
+            type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+            searchable=True,
+            dimensions=3072,                   # text-embedding-3-large
+            vector_search_dimensions=3072,
+            vector_search_profile_name="vprof"
+        )
     ]
     vector_search = VectorSearch(
         algorithms=[HnswAlgorithmConfiguration(name="hnsw", parameters=HnswParameters())],
@@ -32,4 +36,5 @@ def ensure_index():
     try:
         client.create_index(index)
     except Exception:
+        # Exists → ignore
         pass

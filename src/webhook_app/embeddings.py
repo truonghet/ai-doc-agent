@@ -1,5 +1,4 @@
-# src/webhook_app/embeddings.py
-from typing import List, Dict, Any
+from typing import List
 from openai import AsyncOpenAI
 from azure.search.documents import SearchClient
 from azure.core.credentials import AzureKeyCredential

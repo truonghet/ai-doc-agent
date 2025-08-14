@@ -37,7 +37,7 @@ Return JSON: {{"high_level_summary": "...", "functions":[{{"symbol":"...","kind"
 """
 
 async def generate_file_doc(repo: str, pr: int, commit: str, path: str, language: Optional[str], diff: str, old: str, new: str) -> FileDoc:
-    # Use AST to focus on actually changed Python symbols. Fallback to full file if parsing fails.
+    # AST focus on changed Python symbols. Fallback to full-file if parsing fails.
     changed: List[ChangedSymbol] = []
     try:
         changed = extract_python_symbols(old or "", new or "", diff or "")
@@ -45,40 +45,22 @@ async def generate_file_doc(repo: str, pr: int, commit: str, path: str, language
         changed = []
 
     if not changed:
-        # Fallback: create one synthetic block with entire file
         changed_list = "- (fallback) full-file analysis"
-        blocks = f"OLD (truncated):
-```python
-{(old or '')[:2000]}
-```
-NEW (truncated):
-```python
-{(new or '')[:4000]}
-```"
+        blocks = f"OLD (truncated):\n```python\n{(old or '')[:2000]}\n```\nNEW (truncated):\n```python\n{(new or '')[:4000]}\n```"
     else:
-        changed_list = "
-".join([f"- {c.status.upper()} {c.kind}: {c.symbol} (lines {c.new_start}-{c.new_end})" for c in changed])
+        changed_list = "\n".join([f"- {c.status.upper()} {c.kind}: {c.symbol} (lines {c.new_start}-{c.new_end})" for c in changed])
         parts = []
         for c in changed:
             parts.append(
-                "
-".join([
+                "\n".join([
                     f"# Symbol: {c.symbol}",
                     f"# Kind: {c.kind}",
                     f"# Status: {c.status}",
-                    "OLD:
-```python
-" + (c.old_src or "")[:2000] + "
-```",
-                    "NEW:
-```python
-" + (c.new_src or "")[:3000] + "
-```",
+                    "OLD:\n```python\n" + (c.old_src or "")[:2000] + "\n```",
+                    "NEW:\n```python\n" + (c.new_src or "")[:3000] + "\n```",
                 ])
             )
-        blocks = "
-
-".join(parts)
+        blocks = "\n\n".join(parts)
 
     user = DOC_USER_TMPL.format(
         repo=repo, pr_number=pr, path=path, commit_sha=commit,
@@ -104,8 +86,7 @@ def flatten_for_upsert(fd: FileDoc) -> List[UpsertDoc]:
     docs: List[UpsertDoc] = []
     docs.append(UpsertDoc(
         id=f"{fd.repo}:{fd.commit_sha}:{fd.path}:summary",
-        content=f"[FILE SUMMARY]
-{fd.high_level_summary}",
+        content=f"[FILE SUMMARY]\n{fd.high_level_summary}",
         repo=fd.repo, path=fd.path, symbol=None, language=fd.language,
         pr_number=fd.pr_number, commit_sha=fd.commit_sha,
         url=None, kind="file_summary"
@@ -118,13 +99,11 @@ def flatten_for_upsert(fd: FileDoc) -> List[UpsertDoc]:
             f"Parameters: {f.params or 'none'}",
             f"Returns: {f.returns or 'none'}",
             f"Raises: {f.raises or 'none'}",
-            f"Examples:
-{f.examples or 'n/a'}"
+            f"Examples:\n{f.examples or 'n/a'}"
         ]
         docs.append(UpsertDoc(
             id=f"{fd.repo}:{fd.commit_sha}:{fd.path}:{(f.symbol or 'unknown')}",
-            content="
-".join(content_parts),
+            content="\n".join(content_parts),
             repo=fd.repo, path=fd.path, symbol=f.symbol, language=fd.language,
             pr_number=fd.pr_number, commit_sha=fd.commit_sha,
             url=None, kind="function_doc"
